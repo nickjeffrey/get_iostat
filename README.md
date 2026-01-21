@@ -11,8 +11,8 @@ sudo bash
 cd /tmp
 git clone https://github.com/nickjeffrey/get_iostat
 cd get_iostat
+chmod +x get_iostat_data.sh
 cp get_iostat_data.sh /root/get_iostat_data.sh
-chmod +x /root/get_iostat_data.sh
 ```
 
 Create a crontab entry similar to the following.  You will notice that the script runs every minute, but several of the tasks check the current time and only run every 10 minutes or every hour.
