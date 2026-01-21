@@ -139,12 +139,18 @@ if [[ "$MINUTE" == "59" ]]; then
       # creating gnuplot script
       #
       GNUPLOT_SCRIPT=/tmp/iostat/iostat.cpu.gnuplot
+      GNUPLOT_IMAGE=/tmp/iostat/iostat.cpu.stacked.$YEAR-$MONTH.png
+      #
+      # delete old versions
+      #
       test -f $GNUPLOT_SCRIPT && rm -f $GNUPLOT_SCRIPT 
       test -f $GNUPLOT_SCRIPT && echo ERROR: could not delete old version of $GNUPLOT_SCRIPT 
+      test -f $GNUPLOT_IMAGE  && rm -f $GNUPLOT_IMAGE
+      test -f $GNUPLOT_IMAGE  && echo ERROR: could not delete old version of $GNUPLOT_IMAGE
       #
       #
       echo 'set terminal pngcairo size 1400,650'					>> $GNUPLOT_SCRIPT 
-      echo "set output \"iostat.cpu.stacked.$YEAR-$MONTH.png\""				>> $GNUPLOT_SCRIPT 	#output filename includes $YEAR-$MONTH timestamp 
+      echo "set output \"$GNUPLOT_IMAGE\""				         >> $GNUPLOT_SCRIPT 	#output filename includes $YEAR-$MONTH timestamp 
 
       echo 'set datafile separator ","'							>> $GNUPLOT_SCRIPT 
       echo 'set xdata time'								>> $GNUPLOT_SCRIPT 
