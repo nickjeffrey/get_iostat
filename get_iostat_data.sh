@@ -7,7 +7,8 @@
 # 2022-11-24    njeffrey        add df output
 # 2026-01-19    njeffrey        convert iostat CPU data to CSV format for easy graphing and visualization
 # 2026-01-20    njeffrey        add optional gnuplot visualization 
-# 2026-02-i8    njeffrey        convert iostat disk data to CSV format for easy graphing and visualization
+# 2026-02-18    njeffrey        convert iostat disk data to CSV format for easy graphing and visualization
+# 2026-02-18    njeffrey        add "top" and "ps -ef" output
 
 
 # USAGE
@@ -39,6 +40,9 @@ MINUTE=`date +%M`
 # confirm required files exist
 test -f /usr/bin/nmon   || echo ERROR: Cannot find /usr/bin/nmon.   Please install with yum install nmon
 test -f /usr/bin/iostat || echo ERROR: Cannot find /usr/bin/iostat. Please install with yum install sysstat
+test -f /usr/bin/vmstat || echo ERROR: Cannot find /usr/bin/vmstat. Please install with yum install procps-ng
+test -f /usr/bin/top    || echo ERROR: Cannot find /usr/bin/top.    Please install with yum install procps-ng
+test -f /usr/bin/ps     || echo ERROR: Cannot find /usr/bin/ps.     Please install with appropriate commands for your distro.
 
 
 # confirm target folder exists
@@ -47,13 +51,15 @@ test -d /tmp/iostat || echo ERROR: could not create directory /tmp/iostat
 test -d /tmp/iostat || exit
 
 
-# delete files older than 14 days to avoid filling up the filesystem
+# delete files older than 7 days to avoid filling up the filesystem
 echo Deleting old files from /tmp/iostat/
-find /tmp/iostat -type f -mtime +14  -name 'iostat.cpu.[0-9]*.txt'    -execdir rm -- '{}' \;
-find /tmp/iostat -type f -mtime +14  -name 'iostat.disk.[0-9]*.txt'   -execdir rm -- '{}' \;
-find /tmp/iostat -type f -mtime +14  -name 'vmstat.[0-9]*.txt'        -execdir rm -- '{}' \;
-find /tmp/iostat -type f -mtime +14  -name 'nmon.*.csv'               -execdir rm -- '{}' \;
-find /tmp/iostat -type f -mtime +14  -name 'df.[0-9]*.txt'            -execdir rm -- '{}' \;
+find /tmp/iostat -type f -mtime +7   -name 'iostat.cpu.[0-9]*.txt'    -execdir rm -- '{}' \;
+find /tmp/iostat -type f -mtime +7   -name 'iostat.disk.[0-9]*.txt'   -execdir rm -- '{}' \;
+find /tmp/iostat -type f -mtime +7   -name 'vmstat.[0-9]*.txt'        -execdir rm -- '{}' \;
+find /tmp/iostat -type f -mtime +7   -name 'nmon.*.csv'               -execdir rm -- '{}' \;
+find /tmp/iostat -type f -mtime +7   -name 'df.[0-9]*.txt'            -execdir rm -- '{}' \;
+find /tmp/iostat -type f -mtime +7   -name 'top.[0-9]*.txt'           -execdir rm -- '{}' \;
+find /tmp/iostat -type f -mtime +7   -name 'ps.[0-9]*.txt'            -execdir rm -- '{}' \;
 find /tmp/iostat -type f -mtime +365 -name 'iostat.cpu.summary*.csv'  -execdir rm -- '{}' \;  #keep monthly summary files for a year
 find /tmp/iostat -type f -mtime +365 -name 'iostat.disk.summary*.csv' -execdir rm -- '{}' \;  #keep monthly summary files for a year
 
@@ -68,8 +74,17 @@ echo Capturing iostat metrics
 
 # capture vmstat data, because the DBA team wants to see vmstat output, even though it gives the same CPU usage info as iostat
 # only capture once every 10 minutes to save disk space
-echo Capturing vmstat metrics
-echo $MINUTE | grep -E "00|10|20|30|40|50" && /usr/bin/vmstat 1 10 >/tmp/iostat/vmstat.$datestamp.txt
+echo $MINUTE | grep -E "00|10|20|30|40|50" && echo Capturing vmstat metrics && /usr/bin/vmstat 1 10 >/tmp/iostat/vmstat.$datestamp.txt
+
+
+# capture top data to find any big CPU or RAM users
+# only capture once every 10 minutes to save disk space
+echo $MINUTE | grep -E "00|10|20|30|40|50" && echo Capturing top metrics && /usr/bin/top -b -n 1 >/tmp/iostat/top.$datestamp.txt
+
+
+# capture ps output to show running processes
+# only capture once every 10 minutes to save disk space
+echo $MINUTE | grep -E "00|10|20|30|40|50" && echo Capturing ps metrics && /usr/bin/ps -ef  >/tmp/iostat/ps.$datestamp.txt
 
 
 # capture nmon data, because it shows the utilization of each processor core
